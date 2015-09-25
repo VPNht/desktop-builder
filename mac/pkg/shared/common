@@ -1,0 +1,181 @@
+####################################################################
+# Common functions:
+####################################################################
+
+function log_text_base
+{
+	local timestamp=$(date +"%D %T")
+	local msg="$timestamp $1"
+    echo "$msg" >> "$2"
+}
+
+function log_command_base
+{
+    echo "$1" >> "$2"
+}
+
+function print_environment_info
+{
+	log_text "Full path to the installation package the Installer application is processing: "
+	log_text "$1"
+
+	log_text "Full path to the installation destination: "
+	log_text "$2"
+
+	log_text "Installation volume (or mount point) to receive the payload: "
+	log_text "$3"
+
+	log_text "The root directory for the system: "
+	log_text "$4"
+
+	log_text "Filename of the operation executable: "
+	log_text "$SCRIPT_NAME"
+
+	log_text "Full path to the installation package: "
+	log_text "$PACKAGE_PATH"
+
+	log_text "Scratch directory used by Installer to place its temporary work files: "
+	log_text "$INSTALLER_TEMP"
+	log_command "ls -la $INSTALLER_TEMP"
+}
+
+function current_directory_print
+{
+	log_text "Current directory: "
+	log_command pwd
+	log_command "ls -la"
+}
+
+function file_delete
+{
+	local error_code=0
+
+	if [ -f "$1" ]; then
+	    log_text "Removing '$1'..."
+		rm "$1"
+
+		if [ -f "$1" ]; then
+    		log_text "Failed to delete file '$1'"
+			error_code=1
+		fi
+	else
+		log_text "File '$1' does not exist"
+	fi
+
+	return $error_code
+}
+
+#
+# Creates specified directory as user
+#
+# Arguments:
+# 	1) full path to the directory to be created
+#   2) username
+#
+# Return value:
+#   0 - directory successfully created
+#   1 - error occured; directory not created
+#
+function directory_create_as_user
+{
+	local error_code=0
+
+	if [ ! -d "$1" ]; then
+		echo Creating directory "$1" as user "$2"...
+		sudo -u "$2" mkdir -v "$1"
+
+		if [ ! -d "$1" ]; then
+			echo Failed to create directory "$1"
+			error_code=1
+		fi
+	fi
+
+	return $error_code
+}
+
+#
+# Removes given directory (including all its content).
+#
+# Arguments:
+# 	1) full path to the directory to be removed
+#
+# Return value:
+#   0 - directory successfully removed
+#   1 - error occurred; directory not removed
+#
+function directory_remove
+{
+	local error_code=0
+
+	if [ -d "$1" ]; then
+	    log_text "Removing '$1'..."
+		rm -rf "$1"
+
+		if [ -d "$1" ]; then
+    		log_text "Failed to delete directory '$1'"
+			error_code=1
+		fi
+	else
+		log_text "Directory '$1' does not exist"
+	fi
+
+	return $error_code
+}
+
+# arg1 - source
+# arg2 - destination
+function directory_move
+{
+	local error_code=0
+
+	if [ -d "$1" ]; then
+		if [ -d "$2" ]; then
+			log_text "Moving '$1' to '$2'..."
+			mv -f "$1" "$2"
+
+			if [ -d "$1" ]; then
+				log_text "Failed to delete directory '$1'"
+				error_code=1
+			fi
+
+			if [ ! -d "$2" ]; then
+				log_text "Directory '$2' not created"
+				error_code=2
+			fi
+		else
+			log_text "Directory '$2' does not exist"
+		fi
+	else
+		log_text "Directory '$1' does not exist"
+	fi
+
+	return $error_code
+}
+
+#
+# Creates specified file as user
+#
+# Arguments:
+# 	1) full path to the file to be created
+#   2) username
+#
+# Return value:
+#   0 - file successfully created
+#   1 - error occured; file not created
+#
+function file_create_as_user
+{
+	local error_code=0
+
+	if [ ! -f "$1" ]; then
+		echo Creating file "$1" as user "$2"...
+		sudo -u "$2" touch "$1"
+
+		if [ ! -f "$1" ]; then
+			echo Failed to create file "$1"
+			error_code=1
+		fi
+	fi
+
+	return $error_code
+}

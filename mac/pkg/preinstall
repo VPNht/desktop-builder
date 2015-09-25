@@ -1,0 +1,107 @@
+#!/bin/sh
+
+# When this script is executed, all messages printed with echo command directly
+# appear in the Terminal and in /var/log/install.log
+
+PATH_DIR_LOG=~/'Library/Logs/VPN.ht'
+LOGFILE="$PATH_DIR_LOG/installer.log"
+
+LOGIN_USER=`ls -l /dev/console | awk '{ print $3 }'`
+source ./shared/common
+
+####################################################################
+# Log function adapters specific to this script:
+####################################################################
+
+function log_text
+{
+	log_text_base "$1" "$LOGFILE"
+}
+
+function log_command
+{
+	command_output=$($1)
+    log_command_base "$command_output" "$LOGFILE"
+}
+
+####################################################################
+# Functions specific to this script:
+####################################################################
+
+function log_dir_create
+{
+	directory_create_as_user "$PATH_DIR_LOG" "$LOGIN_USER"
+	local error_code=$?
+
+	if [ $error_code -ne 0 ]; then
+		exit 1
+	fi
+}
+
+function log_file_create
+{
+	file_create_as_user "$LOGFILE" "$LOGIN_USER"
+	local error_code=$?
+
+	if [ $error_code -ne 0 ]; then
+		exit 1
+	fi
+}
+
+
+function tuntap_installed
+{
+	local installed=0
+
+	if [ -d "/Library/Extensions/tap.kext" ]; then
+		if [ -d "/Library/Extensions/tun.kext" ]; then
+			if [ -d "/Library/StartupItems/tap" ]; then
+				if [ -d "/Library/StartupItems/tun" ]; then
+					local installed=1
+				fi
+			fi
+		fi
+	fi
+
+	return $installed
+}
+
+function tuntap_install
+{
+	tuntap_installed
+	local installed=$?
+
+	if [ $installed -eq 0 ]; then
+		log_text "TUN/TAP drivers not found. Installing TUN/TAP drivers Installer Package..."
+		sudo installer -pkg ./tuntap_20111101.pkg -target /
+
+		tuntap_installed
+		installed=$?
+		if [ $installed -eq 0 ]; then
+			log_text "Failed to install TUN/TAP drivers"
+			exit 1
+		else
+			log_text "TUN/TAP drivers installed."
+		fi
+	else
+		log_text "TUN/TAP drivers already installed"
+	fi
+}
+
+####################################################################
+# Main script body:
+####################################################################
+
+log_dir_create
+
+log_text "=================="
+log_text "=== preinstall ==="
+log_text "=================="
+
+print_environment_info "$1" "$2" "$3" "$4"
+current_directory_print
+tuntap_install
+
+log_text "Terminating preinstall..."
+
+exit 0

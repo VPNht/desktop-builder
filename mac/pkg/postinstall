@@ -1,0 +1,168 @@
+#!/bin/sh
+#touch  ~/from-pkg-installer
+
+LOGFILE=~/Library/Logs/VPN.ht/installer.log
+PATH_DIR_VPNHT_APP='/Applications/VPN.ht.app'
+
+source ./shared/common
+
+####################################################################
+# Log function adapters specific to this script:
+####################################################################
+
+function log_text
+{
+	log_text_base "$1" "$LOGFILE"
+}
+
+function log_command
+{
+	command_output=$($1)
+    log_command_base "$command_output" "$LOGFILE"
+}
+
+function permissions_set_vpnclients
+{
+	log_text "Setting permissions on VpnClient binaries..."
+	current_directory_print
+
+	DIR_VPN_CLIENTS='/Applications/VPN.ht.app/Contents/Resources/bin'
+
+	if [ ! -d "$DIR_VPN_CLIENTS" ]; then
+		log_text "Directory \"$DIR_VPN_CLIENTS\" does not exist"
+		exit 1
+	fi
+
+	cd "$DIR_VPN_CLIENTS"
+	log_text "Current directory: "
+	log_command "pwd"
+
+	log_text "ls -la before changing permissions: "
+	log_command "ls -la"
+	bin_path=.
+
+	openvpn_module_name="openvpn"
+
+	full_openvpn_module_path="$bin_path/$openvpn_module_name"
+
+	log_text "openvpn path is \"$full_openvpn_module_path\""
+
+	if [ -f "$full_openvpn_module_path" ]; then
+		log_text "openvpn details: "
+		log_command "ls -la $full_openvpn_module_path"
+		log_text "Setting root:admin as openvpn owner..."
+		sudo chown root:admin "$full_openvpn_module_path"
+		log_text "Setting execute permissions for openvpn..."
+		sudo chmod a+x "$full_openvpn_module_path"
+		log_text "Setting setuid on openvpn..."
+		sudo chmod u+s "$full_openvpn_module_path"
+		log_text "openvpn details: "
+		log_command "ls -la $full_openvpn_module_path"
+	else
+		log_text "WARNING: File not found: \"$full_openvpn_module_path\""
+		return 1
+	fi
+
+}
+
+function permissions_set_applications
+{
+
+	log_text "Setting permissions on helper application binaries..."
+	current_directory_print
+
+	DIR_APPLICATIONS='/Applications/VPN.ht.app/Contents/Frameworks/'
+
+	if [ ! -d "$DIR_APPLICATIONS" ]; then
+		log_text "Directory \"$DIR_APPLICATIONS\" does not exist"
+		exit 1
+	fi
+
+	cd "$DIR_APPLICATIONS"
+	log_text "Current directory: "
+	log_command "pwd"
+
+	log_text "ls -la before changing permissions: "
+	log_command "ls -la"
+	bin_path=.
+
+	VPNHTHELPER_NAME="VPN.ht Helper.app"
+
+	PATH_VPNHTHELPER="$bin_path/$VPNHTHELPER_NAME"
+
+	if [ -d "$PATH_VPNHTHELPER" ]; then
+		VPNHTHELPER_NAME="VPN.ht\ Helper.app"
+		PATH_VPNHTHELPER="$bin_path/$VPNHTHELPER_NAME"
+		log_text "VPN.ht Helper.APP details: "
+		log_command "ls -la $PATH_VPNHTHELPER"
+		log_text "Setting root:admin as VPNHTHelper.APP owner..."
+		sudo chown -R root:admin "$PATH_VPNHTHELPER"
+		log_text "Setting execute permissions for VPNHTHelper.APP..."
+		sudo chmod -R a+x "$PATH_VPNHTHELPER"
+		log_text "Setting setuid on VPNHTHelper.APP..."
+		sudo chmod -R u+s "$PATH_VPNHTHELPER"
+		log_text "VPNHTHelper.APP details: "
+		log_command "ls -la $PATH_VPNHTHELPER"
+	else
+		log_text "WARNING: Directory not found: \"$PATH_VPNHTHELPER\""
+		exit 2
+	fi
+}
+
+function permissions_set_scripts
+{
+	log_text "Setting permissions on up/down script..."
+	current_directory_print
+
+	SCRIPTS_PATH='/Applications/VPN.ht.app/Contents/Resources/bin/'
+
+	if [ ! -d "$SCRIPTS_PATH" ]; then
+		log_text "Directory \"$SCRIPTS_PATH\" does not exist"
+		exit 1
+	fi
+
+	cd "$SCRIPTS_PATH"
+
+	log_text "Current directory: "
+	log_command "pwd"
+
+	log_text "ls -la before changing permissions: "
+	log_command "ls -la script.*"
+
+	SCRIPTS_NAME="script.*"
+
+	log_text "\"$SCRIPTS_NAME\" details: "
+	log_command "ls -la $SCRIPTS_NAME"
+
+	log_text "Setting root:admin as owner..."
+	sudo chown -R root:admin $SCRIPTS_NAME
+
+	log_text "Setting execute permissions..."
+	sudo chmod -R a+x $SCRIPTS_NAME
+
+	log_text "Setting setuid on up down scripts..."
+	sudo chmod -R u+s $SCRIPTS_NAME
+
+	log_text "\"$SCRIPTS_NAME\" details: "
+	log_command "ls -la $SCRIPTS_NAME"
+
+}
+
+####################################################################
+# Main script body:
+####################################################################
+
+log_text "==================="
+log_text "=== postinstall ==="
+log_text "==================="
+
+log_text "Setting wheel group on VPN.ht whole application..."
+sudo chown -R root:wheel "$PATH_DIR_VPNHT_APP"
+
+permissions_set_vpnclients
+permissions_set_applications
+permissions_set_scripts
+
+log_text "Installation completed successfully..."
+
+exit 0
