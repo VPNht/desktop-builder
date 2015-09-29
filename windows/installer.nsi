@@ -5,8 +5,8 @@ var loggedInUser
 !include "MUI2.nsh"
 !include "x64.nsh"
 
-!searchparse /file "..\..\package.json" '"name": "' APP_NAME '",'
-!searchparse /file "..\..\package.json" '"version": "' APP_VERSION '",'
+!searchparse /file "../../package.json" '"name": "' APP_NAME '",'
+!searchparse /file "../../package.json" '"version": "' APP_VERSION '",'
 !searchreplace APP_VERSION_CLEAN "${APP_VERSION}" "-" ".0"
 
 !addplugindir .
@@ -17,15 +17,15 @@ var loggedInUser
 Name "${APP_NAME}"
 Caption "${APP_NAME} ${APP_VERSION}"
 !include "MUI2.nsh"
-!define MUI_ICON "..\setup.ico"
+!define MUI_ICON "../setup.ico"
 
 SetCompressor /SOLID lzma
 
 # define the resulting installer's name
-OutFile "..\..\dist\${APP_NAME}-${APP_VERSION}-Setup.exe"
+OutFile "../../dist/${APP_NAME}-${APP_VERSION}-Setup.exe"
 
 # set the installation directory
-InstallDir "$PROGRAMFILES\${APP_NAME}\"
+InstallDir "$PROGRAMFILES\${APP_NAME}/"
 
 # app dialogs
 !insertmacro MUI_PAGE_WELCOME
@@ -56,7 +56,7 @@ Section
   RMDir /r $INSTDIR
   SetOutPath $INSTDIR
 
-  File /r "..\..\dist\VPN.ht-win32-ia32\*"
+  File /r "../../dist\VPN.ht-win32-ia32\*"
 
   WriteUninstaller "$INSTDIR\Uninstall ${APP_NAME}.exe"
 
