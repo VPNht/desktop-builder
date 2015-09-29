@@ -1,6 +1,3 @@
-;Enable Unicode encoding
-Unicode False
-
 !define REG_KEY "HKLM SOFTWARE\OpenVPN"
 var loggedInUser
 
