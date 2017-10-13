@@ -145,7 +145,33 @@ function permissions_set_scripts
 
 	log_text "\"$SCRIPTS_NAME\" details: "
 	log_command "ls -la $SCRIPTS_NAME"
+}
 
+function permissions_set_services
+{
+cat <<EOF > /Library/LaunchDaemons/com.vpnht.service.plist
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.vpnht.service</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Applications/VPN.ht.app/Contents/Resources/bin/vpnht-service</string>
+        <string></string>
+    </array>
+    <key>KeepAlive</key>
+    <false/>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>UserName</key>
+    <string>root</string>
+</dict>
+</plist>
+EOF
+
+	sudo launchctl load /Library/LaunchDaemons/com.vpnht.service.plist
 }
 
 ####################################################################
@@ -162,6 +188,7 @@ sudo chown -R root:wheel "$PATH_DIR_VPNHT_APP"
 permissions_set_vpnclients
 permissions_set_applications
 permissions_set_scripts
+permissions_set_services
 
 log_text "Installation completed successfully..."
 
